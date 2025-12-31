@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Happy New Year 🎉</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family: Arial, sans-serif;
+}
+
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+  color:white;
+  text-align:center;
+  transition: background 2s ease;
+}
+
+/* Fireworks */
+.firework{
+  position:absolute;
+  width:6px;
+  height:6px;
+  background:yellow;
+  border-radius:50%;
+  animation: explode 2s infinite;
+}
+
+@keyframes explode{
+  0%{transform:scale(0); opacity:1;}
+  100%{transform:scale(15); opacity:0;}
+}
+
+.card{
+  background: rgba(0,0,0,0.6);
+  padding:30px;
+  border-radius:20px;
+  width:90%;
+  max-width:420px;
+  box-shadow:0 0 25px cyan;
+  z-index:2;
+}
+
+h1{
+  color:#00f7ff;
+  margin-bottom:10px;
+}
+
+p{
+  font-size:18px;
+  margin-bottom:15px;
+  white-space:pre-line;
+}
+
+button{
+  padding:10px 18px;
+  margin:5px;
+  border:none;
+  border-radius:25px;
+  background:#00f7ff;
+  color:black;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#00c9d1;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Fireworks -->
+<div class="firework" style="top:20%; left:30%"></div>
+<div class="firework" style="top:40%; left:70%"></div>
+<div class="firework" style="top:60%; left:50%"></div>
+
+<div class="card">
+  <h1 id="title">🎉 Happy New Year 🎉</h1>
+  <p id="msg">
+Naya saal aapke liye
+khushiyaan aur success laaye ✨
+  </p>
+
+  <button onclick="friends()">Friends</button>
+  <button onclick="family()">Family</button>
+  <button onclick="share()">WhatsApp Share</button>
+</div>
+
+<!-- Background Music (AUTO PLAY) -->
+<audio id="music" autoplay loop>
+  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_7f8f1b0a1b.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// Wishes
+function friends(){
+  document.getElementById("title").innerText="🥳 Happy New Year Dostoo!";
+  document.getElementById("msg").innerText=
+"Naya saal ho full masti 😎\nFull success 🚀\nAur dosti hamesha strong 🤝";
+}
+
+function family(){
+  document.getElementById("title").innerText="❤️ Happy New Year Family";
+  document.getElementById("msg").innerText=
+"Naya saal aap sabke liye\nsukh, shanti aur sehat laaye 🙏\nAapka saath hi sab kuch hai ✨";
+}
+
+// WhatsApp Share
+function share(){
+  let text="🎉 Happy New Year 🎉\nAapke liye khushiyaan aur success!";
+  window.open("https://wa.me/?text="+encodeURIComponent(text));
+}
+
+// 🔥 AUTO COLOR CHANGE
+const colors = [
+  "linear-gradient(135deg,#1a2a6c,#000)",
+  "linear-gradient(135deg,#42275a,#734b6d)",
+  "linear-gradient(135deg,#134e5e,#71b280)",
+  "linear-gradient(135deg,#000428,#004e92)",
+  "linear-gradient(135deg,#ff512f,#dd2476)"
+];
+
+let i = 0;
+setInterval(() => {
+  document.body.style.background = colors[i];
+  i = (i + 1) % colors.length;
+}, 3000);
+</script>
+
+</body>
+</html>
