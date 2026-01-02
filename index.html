@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy New Year 2026</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: radial-gradient(circle at top, #111, #000);
+    color: gold;
+    font-family: 'Segoe UI', sans-serif;
+    text-align: center;
+    overflow: hidden;
+}
+
+h1 {
+    margin-top: 50px;
+    font-size: 3em;
+    text-shadow: 0 0 25px gold;
+}
+
+h2 {
+    color: white;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: rgba(255,215,0,0.08);
+    margin: 15px auto;
+    padding: 15px;
+    width: 85%;
+    max-width: 400px;
+    border-radius: 15px;
+    backdrop-filter: blur(6px);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+
+button {
+    background: gold;
+    border: none;
+    padding: 12px 25px;
+    margin: 10px;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 0 20px gold;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="fireworks"></canvas>
+
+<h1>Happy New Year</h1>
+<h2>2026</h2>
+
+<div class="card">🎉 <b>Family & Friends</b> – Naye saal mein khushiyaan, pyaar aur safalta ho!</div>
+<div class="card">✨ <b>Celebration</b> – 2026 aapke liye sabse yaadgaar saal bane!</div>
+<div class="card">🌙 <b>Dreams</b> – Apne sapnon ka peecha bhago, ye saal aapka hai!</div>
+
+<button onclick="boom()">🎆 Celebrate!</button>
+
+<script>
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let fireworks = [];
+
+class Firework {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.particles = [];
+        for (let i = 0; i < 50; i++) {
+            this.particles.push({
+                x: x,
+                y: y,
+                angle: Math.random() * 2 * Math.PI,
+                speed: Math.random() * 5 + 2,
+                alpha: 1
+            });
+        }
+    }
+
+    update() {
+        this.particles.forEach(p => {
+            p.x += Math.cos(p.angle) * p.speed;
+            p.y += Math.sin(p.angle) * p.speed;
+            p.alpha -= 0.015;
+        });
+    }
+
+    draw() {
+        this.particles.forEach(p => {
+            ctx.fillStyle = `rgba(255,215,0,${p.alpha})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+}
+
+function boom() {
+    fireworks.push(new Firework(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height / 2
+    ));
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    fireworks.forEach((f, i) => {
+        f.update();
+        f.draw();
+        if (f.particles[0].alpha <= 0) fireworks.splice(i, 1);
+    });
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+// auto fireworks
+setInterval(boom, 1200);
+</script>
+
+</body>
+</html>
