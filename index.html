@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farewell 2026 | Mobile Fixed Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+<style>
+/* --- SETUP --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: radial-gradient(circle, #2d0a1a, #000);
+    color: #ff69b4;
+    font-family: 'Playfair Display', serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+h1 { 
+    font-size: 1.8rem; 
+    margin-bottom: 20px; 
+    text-shadow: 0 0 15px #ff1493;
+    text-align: center;
+    padding: 0 10px;
+}
+
+/* --- BOOK SCENE (Centered & Responsive) --- */
+.book-scene { 
+    width: 280px; 
+    height: 400px; 
+    perspective: 1500px; 
+    transition: transform 0.8s ease;
+}
+
+/* Jab book open ho, toh use thoda right move kar do taki left page na chhipe */
+.book-scene.moved {
+    transform: translateX(40%); /* Moving slightly right on open */
+}
+
+@media (max-width: 600px) {
+    .book-scene { width: 220px; height: 320px; }
+    .book-scene.moved { transform: translateX(35%); }
+}
+
+.book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
+
+.page {
+    position: absolute; width: 100%; height: 100%;
+    transform-origin: left; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    transform-style: preserve-3d; cursor: pointer;
+}
+
+.front, .back {
+    position: absolute; width: 100%; height: 100%;
+    backface-visibility: hidden; border: 2px solid #ff69b4;
+    border-radius: 5px 12px 12px 5px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 15px;
+}
+
+.front { background: #000; z-index: 2; box-shadow: inset 0 0 20px rgba(255, 20, 147, 0.2); }
+.back {
+    transform: rotateY(180deg); background: #fff0f5; color: #4a001f;
+    font-family: 'Dancing Script', cursive; font-size: 1.2rem; text-align: center;
+    justify-content: center;
+}
+
+.flipped { transform: rotateY(-180deg); }
+
+/* --- PHOTO FRAME --- */
+.photo-frame {
+    position: relative;
+    width: 90%;
+    height: 80%;
+    background: #fff;
+    padding: 8px 8px 30px 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.photo-frame img { width: 100%; height: 100%; object-fit: cover; border: 1px solid #eee; }
+
+.tape {
+    position: absolute; width: 45px; height: 18px;
+    background: rgba(255, 182, 193, 0.6); backdrop-filter: blur(2px); z-index: 10;
+}
+.t-tl { top: -5px; left: -10px; transform: rotate(-40deg); }
+.t-tr { top: -5px; right: -10px; transform: rotate(40deg); }
+.t-bl { bottom: -5px; left: -10px; transform: rotate(40deg); }
+.t-br { bottom: -5px; right: -10px; transform: rotate(-40deg); }
+
+/* --- CONTROLS --- */
+.controls { margin-top: 30px; display: flex; gap: 10px; z-index: 100; }
+button {
+    padding: 8px 15px; background: transparent; border: 2px solid #ff1493;
+    color: #ffb6c1; border-radius: 20px; cursor: pointer; font-size: 0.9rem;
+}
+button:hover { background: #ff1493; color: #fff; }
+
+.confetti { position: fixed; top: -20px; animation: fall linear forwards; z-index: 1000; }
+@keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+</style>
+</head>
+<body>
+
+<h1>💕 Farewell Diary 2026 💕</h1>
+
+<div class="book-scene" id="scene">
+    <div class="book" id="book">
+        
+        <div class="page" style="z-index: 5;">
+            <div class="front" style="background: linear-gradient(135deg, #ff1493, #4a001f); color:#fff; justify-content: center;">
+                <h2 style="font-size: 1.5rem; text-shadow: 2px 2px 5px #000;">OUR STORY</h2>
+                <div style="font-size: 3rem; margin: 15px 0;">🌸</div>
+                <p style="font-size: 0.8rem;">Tap to Open</p>
+            </div>
+            <div class="back"><p>Everything starts with a "Hello"... ❤️</p></div>
+        </div>
+
+        <div class="page" style="z-index: 4;">
+            <div class="front">
+                <div class="photo-frame">
+                    <div class="tape t-tl"></div><div class="tape t-tr"></div>
+                    <div class="tape t-bl"></div><div class="tape t-br"></div>
+                    <img src="https://picsum.photos/id/1011/300/400">
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9rem;">The Squad 🤝</p>
+            </div>
+            <div class="back"><p>Bina matlab ki hasi aur wo dher saari masti!</p></div>
+        </div>
+
+        <div class="page" style="z-index: 3;">
+            <div class="front">
+                <div class="photo-frame">
+                    <div class="tape t-tl"></div><div class="tape t-tr"></div>
+                    <div class="tape t-bl"></div><div class="tape t-br"></div>
+                    <img src="https://picsum.photos/id/1015/300/400">
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9rem;">Magic Moments ✨</p>
+            </div>
+            <div class="back"><p>In yaadon ko humesha dil ke paas rakhenge.</p></div>
+        </div>
+
+    </div>
+</div>
+
+<div class="controls">
+    <button onclick="toggleMusic()" id="musicBtn">🔇 Music</button>
+    <button onclick="resetBook()">↻ Replay</button>
+</div>
+
+<audio id="bgMusic" loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-memories.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    const pages = document.querySelectorAll('.page');
+    const scene = document.getElementById('scene');
+    const audio = document.getElementById("bgMusic");
+    const musicBtn = document.getElementById("musicBtn");
+    let isMusicPlaying = false;
+    let flippedCount = 0;
+
+    function initZ() { pages.forEach((p, i) => p.style.zIndex = pages.length - i); }
+    initZ();
+
+    pages.forEach((page, index) => {
+        page.addEventListener('click', () => {
+            if (!isMusicPlaying && index === 0) playMusic();
+            
+            if (!page.classList.contains('flipped')) {
+                page.classList.add('flipped');
+                flippedCount++;
+                
+                // Jab pehla page khule, book ko right move karo
+                if (flippedCount > 0) {
+                    scene.classList.add('moved');
+                }
+                
+                setTimeout(() => page.style.zIndex = index, 400);
+                createConfetti();
+            }
+        });
+    });
+
+    function resetBook() {
+        flippedCount = 0;
+        scene.classList.remove('moved'); // Book wapas center mein
+        Array.from(pages).reverse().forEach((p, i) => {
+            setTimeout(() => {
+                p.classList.remove('flipped');
+                setTimeout(initZ, 400);
+            }, i * 150);
+        });
+    }
+
+    function playMusic() { audio.play(); isMusicPlaying = true; musicBtn.innerHTML = "🎵 On"; }
+    function toggleMusic() {
+        if (isMusicPlaying) { audio.pause(); musicBtn.innerHTML = "🔇 Off"; }
+        else { audio.play(); musicBtn.innerHTML = "🎵 On"; }
+        isMusicPlaying = !isMusicPlaying;
+    }
+
+    function createConfetti() {
+        for(let i=0; i<10; i++) {
+            const c = document.createElement("div");
+            c.className = "confetti";
+            c.innerText = ["💖", "🌸", "✨"][Math.floor(Math.random()*3)];
+            c.style.left = Math.random()*100+"vw";
+            c.style.animationDuration = (Math.random()*2+2)+"s";
+            document.body.appendChild(c);
+            setTimeout(() => c.remove(), 4000);
+        }
+    }
+</script>
+
+</body>
+</html>
