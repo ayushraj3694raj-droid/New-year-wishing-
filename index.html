@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>✨ Hand Gesture Magic</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* ===== ANIMATED BACKGROUND GRID ===== */
+        #bg_grid {
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(rgba(0,255,204,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,204,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: gridPulse 4s ease-in-out infinite;
+            z-index: 0;
+        }
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* ===== CORNER DECORATIONS ===== */
+        .corner {
+            position: fixed;
+            width: 60px; height: 60px;
+            z-index: 5;
+        }
+        .corner::before, .corner::after {
+            content: '';
+            position: absolute;
+            background: #00ffcc;
+        }
+        .corner::before { width: 100%; height: 3px; }
+        .corner::after  { width: 3px; height: 100%; }
+        .corner.tl { top: 15px; left: 15px; }
+        .corner.tr { top: 15px; right: 15px; transform: scaleX(-1); }
+        .corner.bl { bottom: 15px; left: 15px; transform: scaleY(-1); }
+        .corner.br { bottom: 15px; right: 15px; transform: scale(-1); }
+
+        /* ===== SCAN LINE ANIMATION ===== */
+        #scanline {
+            position: fixed;
+            left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #00ffcc88, transparent);
+            box-shadow: 0 0 20px #00ffcc;
+            animation: scan 3s linear infinite;
+            z-index: 6;
+            pointer-events: none;
+        }
+        @keyframes scan {
+            0%   { top: 0; opacity: 1; }
+            90%  { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* ===== MAIN CANVAS ===== */
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ===== PARTICLE CANVAS (on top) ===== */
+        #particle_canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 7;
+        }
+
+        /* ===== GESTURE BOX ===== */
+        #gesture_box {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 32px;
+            border-radius: 50px;
+            border: 2px solid #00ffcc;
+            font-family: 'Orbitron', monospace;
+            font-size: 17px;
+            font-weight: 700;
+            backdrop-filter: blur(10px);
+            background: rgba(0,255,204,0.08);
+            z-index: 20;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 15px currentColor;
+            animation: boxFloat 3s ease-in-out infinite;
+        }
+        @keyframes boxFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0px); }
+            50%       { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* Glow pulse on gesture box */
+        .gesture-active {
+            animation: boxFloat 3s ease-in-out infinite, glowPulse 0.6s ease-in-out infinite alternate !important;
+        }
+        @keyframes glowPulse {
+            from { box-shadow: 0 0 10px var(--glow), 0 0 20px var(--glow); }
+            to   { box-shadow: 0 0 25px var(--glow), 0 0 50px var(--glow), 0 0 80px var(--glow); }
+        }
+
+        /* ===== FINGER COUNT BOX ===== */
+        #finger_count {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.05);
+            padding: 10px 28px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.15);
+            font-size: 15px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            letter-spacing: 1px;
+            backdrop-filter: blur(8px);
+            z-index: 20;
+            transition: all 0.3s;
+        }
+
+        /* ===== FPS / STATUS BAR ===== */
+        #status_bar {
+            position: fixed;
+            top: 80px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 20;
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            color: rgba(0,255,204,0.6);
+        }
+        .stat-pill {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(0,255,204,0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* ===== RIPPLE EFFECT ===== */
+        .ripple {
+            position: fixed;
+            border-radius: 50%;
+            border: 2px solid #00ffcc;
+            pointer-events: none;
+            z-index: 15;
+            animation: rippleOut 0.8s ease-out forwards;
+        }
+        @keyframes rippleOut {
+            from { transform: scale(0.2); opacity: 1; }
+            to   { transform: scale(3);   opacity: 0; }
+        }
+
+        /* ===== LOADING SCREEN ===== */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            gap: 20px;
+        }
+        .loading-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+            color: #00ffcc;
+            letter-spacing: 3px;
+            animation: titleBlink 1.5s ease-in-out infinite;
+        }
+        @keyframes titleBlink {
+            0%, 100% { opacity: 1; text-shadow: 0 0 20px #00ffcc; }
+            50%       { opacity: 0.4; text-shadow: none; }
+        }
+        .loading-bar-wrap {
+            width: 220px;
+            height: 4px;
+            background: rgba(0,255,204,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .loading-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffcc, #ff3366);
+            border-radius: 10px;
+            animation: loadBar 2s ease-in-out infinite;
+        }
+        @keyframes loadBar {
+            0%   { width: 0%; }
+            50%  { width: 80%; }
+            100% { width: 100%; }
+        }
+        .loading-sub {
+            color: #555;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background -->
+    <div id="bg_grid"></div>
+    <div id="scanline"></div>
+
+    <!-- Corner decorations -->
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-title">⚡ GESTURE AI</div>
+        <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+        <div class="loading-sub">Model + Camera load ho rahi hai...</div>
+    </div>
+
+    <!-- Main -->
+    <div class="container">
+        <video id="input_video" style="display:none" playsinline></video>
+        <canvas id="output_canvas"></canvas>
+    </div>
+
+    <!-- Particle layer on top -->
+    <canvas id="particle_canvas"></canvas>
+
+    <!-- UI overlays -->
+    <div id="gesture_box">🤚 Haath dikhayein...</div>
+    <div id="finger_count">🖐️ Ungliyaan: —</div>
+    <div id="status_bar">
+        <div class="stat-pill" id="fps_display">FPS: —</div>
+        <div class="stat-pill" id="hand_display">HANDS: 0</div>
+    </div>
+
+    <script>
+    // ============================================================
+    //  SETUP
+    // ============================================================
+    const videoEl   = document.getElementById('input_video');
+    const mainCanvas= document.getElementById('output_canvas');
+    const mainCtx   = mainCanvas.getContext('2d');
+    const pCanvas   = document.getElementById('particle_canvas');
+    const pCtx      = pCanvas.getContext('2d');
+    const gestureBox= document.getElementById('gesture_box');
+    const fingerBox = document.getElementById('finger_count');
+    const loadingEl = document.getElementById('loading');
+    const fpsEl     = document.getElementById('fps_display');
+    const handEl    = document.getElementById('hand_display');
+
+    function resize() {
+        mainCanvas.width = pCanvas.width = window.innerWidth;
+        mainCanvas.height= pCanvas.height= window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // ============================================================
+    //  PARTICLES SYSTEM
+    // ============================================================
+    let particles = [];
+    let handCenter = null;
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y;
+            this.color = color;
+            this.r = Math.random() * 4 + 1;
+            this.vx = (Math.random() - 0.5) * 5;
+            this.vy = (Math.random() - 0.5) * 5;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.03 + 0.015;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.08; // gravity
+            this.life -= this.decay;
+            this.r *= 0.97;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = this.life;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = this.color;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    // Trail particles (follow fingertips)
+    let trailPoints = [];
+
+    function spawnParticles(x, y, color, count = 8) {
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle(x, y, color));
+        }
+    }
+
+    // ============================================================
+    //  ORBIT RINGS (around wrist)
+    // ============================================================
+    let orbitAngle = 0;
+
+    function drawOrbitRings(ctx, cx, cy, color) {
+        orbitAngle += 0.03;
+        for (let i = 0; i < 3; i++) {
+            const angle = orbitAngle + (i * Math.PI * 2) / 3;
+            const r = 55 + i * 15;
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = 0.25 + 0.1 * Math.sin(orbitAngle * 2 + i);
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 10]);
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, r, r * 0.35, angle, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Dot on orbit
+            const dotX = cx + Math.cos(angle) * r;
+            const dotY = cy + Math.sin(angle) * r * 0.35;
+            ctx.globalAlpha = 0.9;
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    // ============================================================
+    //  RIPPLE
+    // ============================================================
+    function createRipple(x, y, color) {
+        const el = document.createElement('div');
+        el.className = 'ripple';
+        el.style.width = el.style.height = '60px';
+        el.style.left = (x - 30) + 'px';
+        el.style.top  = (y - 30) + 'px';
+        el.style.borderColor = color;
+        el.style.boxShadow = `0 0 12px ${color}`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 800);
+    }
+
+    // ============================================================
+    //  ENERGY BEAM (connect fingertips)
+    // ============================================================
+    function drawEnergyBeams(ctx, lms, color) {
+        const tips = [4, 8, 12, 16, 20];
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.35;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = color;
+        ctx.setLineDash([4, 8]);
+        for (let i = 0; i < tips.length; i++) {
+            for (let j = i + 1; j < tips.length; j++) {
+                const a = lms[tips[i]], b = lms[tips[j]];
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
+    }
+
+    // ============================================================
+    //  LANDMARK GLOW
+    // ============================================================
+    function drawGlowLandmarks(ctx, lms, color) {
+        const tips = [4, 8, 12, 16, 20];
+        lms.forEach((lm, idx) => {
+            const isTip = tips.includes(idx);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(lm.x, lm.y, isTip ? 7 : 4, 0, Math.PI * 2);
+            ctx.fillStyle = isTip ? color : 'rgba(255,255,255,0.5)';
+            ctx.shadowBlur = isTip ? 20 : 8;
+            ctx.shadowColor = color;
+            ctx.fill();
+            ctx.restore();
+
+            // Spawn trail particles on fingertips
+            if (isTip && Math.random() < 0.4) {
+                spawnParticles(lm.x, lm.y, color, 2);
+            }
+        });
+    }
+
+    // ============================================================
+    //  CONNECTOR GLOW
+    // ============================================================
+    function drawGlowConnectors(ctx, lms, color) {
+        const connections = HAND_CONNECTIONS;
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = color;
+        ctx.globalAlpha = 0.85;
+        connections.forEach(([a, b]) => {
+            ctx.beginPath();
+            ctx.moveTo(lms[a].x, lms[a].y);
+            ctx.lineTo(lms[b].x, lms[b].y);
+            ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+    // ============================================================
+    //  GESTURE LOGIC
+    // ============================================================
+    function countFingers(lms) {
+        const tips = [4, 8, 12, 16, 20];
+        const pips = [2, 6, 10, 14, 18];
+        let count = 0;
+        if (lms[4].x < lms[3].x) count++;
+        for (let i = 1; i < 5; i++) {
+            if (lms[tips[i]].y < lms[pips[i]].y) count++;
+        }
+        return count;
+    }
+
+    const GESTURES = {
+        0: { text: "👊 Mutthi (Fist)",      color: "#ff3366", glow: "#ff3366" },
+        1: { text: "☝️ Ek Ungali",           color: "#ffcc00", glow: "#ffcc00" },
+        2: { text: "✌️ Victory / Peace",      color: "#66ff88", glow: "#66ff88" },
+        3: { text: "🤟 Teen Ungliyaan",       color: "#ff9900", glow: "#ff9900" },
+        4: { text: "🖖 Chaar Ungliyaan",      color: "#cc88ff", glow: "#cc88ff" },
+        5: { text: "✋ Khula Haath (Open)",   color: "#00ffcc", glow: "#00ffcc" },
+    };
+
+    let lastGestureCount = -1;
+    let rippleCooldown = 0;
+
+    // ============================================================
+    //  FPS TRACKER
+    // ============================================================
+    let frameCount = 0, lastTime = performance.now(), fps = 0;
+    function updateFPS() {
+        frameCount++;
+        const now = performance.now();
+        if (now - lastTime >= 500) {
+            fps = Math.round(frameCount * 1000 / (now - lastTime));
+            frameCount = 0; lastTime = now;
+            fpsEl.textContent = `FPS: ${fps}`;
+        }
+    }
+
+    // ============================================================
+    //  PARTICLE LOOP (rAF)
+    // ============================================================
+    function particleLoop() {
+        pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+
+        // Ambient center glow when hand detected
+        if (handCenter) {
+            const grad = pCtx.createRadialGradient(
+                handCenter.x, handCenter.y, 0,
+                handCenter.x, handCenter.y, 120
+            );
+            grad.addColorStop(0, 'rgba(0,255,204,0.08)');
+            grad.addColorStop(1, 'transparent');
+            pCtx.fillStyle = grad;
+            pCtx.beginPath();
+            pCtx.arc(handCenter.x, handCenter.y, 120, 0, Math.PI * 2);
+            pCtx.fill();
+        }
+
+        particles = particles.filter(p => p.life > 0);
+        particles.forEach(p => { p.update(); p.draw(pCtx); });
+
+        requestAnimationFrame(particleLoop);
+    }
+    particleLoop();
+
+    // ============================================================
+    //  MEDIAPIPE RESULTS
+    // ============================================================
+    function onResults(results) {
+        loadingEl.style.display = 'none';
+        updateFPS();
+
+        mainCtx.save();
+        mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+        // Mirror flip
+        mainCtx.translate(mainCanvas.width, 0);
+        mainCtx.scale(-1, 1);
+        mainCtx.drawImage(results.image, 0, 0, mainCanvas.width, mainCanvas.height);
+        mainCtx.restore();
+
+        const W = mainCanvas.width, H = mainCanvas.height;
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            handEl.textContent = `HANDS: ${results.multiHandLandmarks.length}`;
+
+            results.multiHandLandmarks.forEach(raw => {
+                // Convert to pixel coords + mirror
+                const lms = raw.map(lm => ({
+                    x: (1 - lm.x) * W,
+                    y: lm.y * H
+                }));
+
+                const count   = countFingers(raw);
+                const gesture = GESTURES[count] || GESTURES[5];
+                const color   = gesture.color;
+
+                // Wrist center
+                const wx = lms[0].x, wy = lms[0].y;
+                handCenter = { x: wx, y: wy };
+
+                // ---- Draw layers ----
+                drawGlowConnectors(mainCtx, lms, color);
+                drawGlowLandmarks(mainCtx, lms, color);
+                drawOrbitRings(mainCtx, wx, wy, color);
+                drawEnergyBeams(mainCtx, lms, color);
+
+                // Ripple on gesture change
+                rippleCooldown--;
+                if (count !== lastGestureCount && rippleCooldown <= 0) {
+                    createRipple(wx, wy, color);
+                    spawnParticles(wx, wy, color, 20);
+                    lastGestureCount = count;
+                    rippleCooldown = 20;
+                }
+
+                // UI update
+                gestureBox.textContent = gesture.text;
+                gestureBox.style.borderColor = color;
+                gestureBox.style.color = color;
+                gestureBox.style.background = color + '18';
+                gestureBox.style.setProperty('--glow', color);
